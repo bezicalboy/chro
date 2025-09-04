@@ -34,7 +34,7 @@ export default function ChronosApp() {
         methodName: 'increment',
         params: [],
         frequency: 100n,
-        expirationBlock: 999999999n,
+        expirationBlock: 28800n,
         gasLimit: BigInt(gasSettings.gasLimit), // Use user-set gas limit
         maxGasPrice: parseGwei(gasSettings.gasPrice) // Use user-set gas price
       };
