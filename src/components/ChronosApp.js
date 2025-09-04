@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useEstimateGas } from 'wagmi';
+import { parseGwei, formatEther } from 'viem';
 import { CHRONOS_ADDRESS, CHRONOS_ABI, TARGET_CONTRACT } from '../constants/contracts';
 
 export default function ChronosApp() {
   const { address, isConnected } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [gasSettings, setGasSettings] = useState({
+    gasLimit: '200000', // Increased from 100000
+    gasPrice: '20', // 20 gwei
+  });
   
   const { writeContract, data: hash, error } = useWriteContract();
   
@@ -30,8 +35,8 @@ export default function ChronosApp() {
         params: [],
         frequency: 100n,
         expirationBlock: 999999999n,
-        gasLimit: 100000n,
-        maxGasPrice: 1000000000n
+        gasLimit: BigInt(gasSettings.gasLimit), // Use user-set gas limit
+        maxGasPrice: parseGwei(gasSettings.gasPrice) // Use user-set gas price
       };
       
       writeContract({
@@ -48,6 +53,8 @@ export default function ChronosApp() {
           params.gasLimit,
           params.maxGasPrice
         ],
+        gas: BigInt(gasSettings.gasLimit), // Set transaction gas limit
+        gasPrice: parseGwei(gasSettings.gasPrice), // Set transaction gas price
       });
     } catch (err) {
       console.error('Error creating cron job:', err);
@@ -73,12 +80,38 @@ export default function ChronosApp() {
 
   return (
     <div className="max-w-md mx-auto mt-16">
-      {/* Main Card */}
       <div className="bg-gray-900/50 backdrop-blur border border-gray-700/50 rounded-2xl p-8 shadow-2xl">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-light text-white mb-2">Chronos</h1>
           <p className="text-gray-400 text-sm">Helios Scheduler</p>
+        </div>
+
+        {/* Gas Settings - NEW */}
+        <div className="mb-6 p-4 bg-gray-800/30 border border-gray-700/30 rounded-xl">
+          <h3 className="text-sm font-medium text-gray-300 mb-3">Gas Configuration</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Gas Limit</label>
+              <input
+                type="text"
+                value={gasSettings.gasLimit}
+                onChange={(e) => setGasSettings(prev => ({...prev, gasLimit: e.target.value}))}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 text-sm"
+                placeholder="200000"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Gas Price (Gwei)</label>
+              <input
+                type="text"
+                value={gasSettings.gasPrice}
+                onChange={(e) => setGasSettings(prev => ({...prev, gasPrice: e.target.value}))}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 text-sm"
+                placeholder="20"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Settings Preview */}
@@ -98,8 +131,8 @@ export default function ChronosApp() {
               <span className="text-gray-300">100 blocks</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Gas Limit</span>
-              <span className="text-gray-300">100k</span>
+              <span className="text-gray-400">Est. Cost</span>
+              <span className="text-green-400">{(parseInt(gasSettings.gasLimit) * parseInt(gasSettings.gasPrice) / 1e9).toFixed(6)} XOS</span>
             </div>
           </div>
         </div>
