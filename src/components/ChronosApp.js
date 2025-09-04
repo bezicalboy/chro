@@ -35,8 +35,8 @@ export default function ChronosApp() {
         params: [],
         frequency: 100n,
         expirationBlock: 28800n,
-        gasLimit: BigInt(gasSettings.gasLimit), // Use user-set gas limit
-        maxGasPrice: parseGwei(gasSettings.gasPrice) // Use user-set gas price
+        gasLimit: 500000n,       // Fixed: Gas for increment() execution
+        maxGasPrice: 20000000000n 
       };
       
       writeContract({
